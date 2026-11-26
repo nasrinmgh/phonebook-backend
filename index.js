@@ -46,7 +46,7 @@ const generateId = () => {
   return String(maxId + 1);
 };
 
-app.post("/api/persons", (reqeust, response) => {
+app.post("/api/persons", (request, response) => {
   const body = reqeust.body;
 
   if (!body.name || !body.number) {
