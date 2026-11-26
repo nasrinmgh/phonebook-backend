@@ -1,0 +1,98 @@
+import { useState, useEffect } from "react";
+import axios from "axios";
+import personService from "./services/persons";
+import Infos from "./components/Infos";
+import Filter from "./components/Filter";
+
+const App = () => {
+  const [persons, setPersons] = useState([]);
+  const [newName, setNewName] = useState("");
+  const [newNumber, setNewNumber] = useState("");
+  const [filter, setFilter] = useState("");
+  const [errorMessage, setErrorMessage] = useState(null);
+
+  useEffect(() => {
+    personService.getAll().then((persons) => {
+      setPersons(persons);
+    });
+  }, []);
+
+  const handleAddPerson = (event) => {
+    event.preventDefault();
+
+    const nameExists = persons.some((person) => person.name === newName);
+    if (nameExists) {
+      alert(`${newName} already exists`);
+      return;
+    }
+
+    const person = {
+      name: newName,
+      number: newNumber,
+    };
+
+    personService
+      .create(person)
+      .then((returnedPerson) =>
+        setPersons((persons) => persons.concat(returnedPerson)),
+      )
+      .catch((error) => {
+        setErrorMessage(error.response.data.error);
+      });
+    setNewName("");
+    setNewNumber("");
+  };
+
+  const confirmDelete = (id) => {
+    const confirmed = window.confirm("Delete this person?");
+    if (confirmed) {
+      personService.deletePerson(id).then(() => {
+        setPersons((persons) => persons.filter((person) => person.id !== id));
+      });
+    }
+  };
+
+  const handleNewPerson = (event) => {
+    setNewName(event.target.value);
+  };
+
+  const handleNewNumber = (event) => {
+    setNewNumber(event.target.value);
+  };
+
+  const handleFilter = (event) => {
+    setFilter(event.target.value);
+  };
+
+  const personsToShow = filter
+    ? persons.filter((person) =>
+        person.name.toLowerCase().includes(filter.toLowerCase()),
+      )
+    : persons;
+
+  return (
+    <div>
+      <h2>Phonebook</h2>
+      <Filter onChange={handleFilter} value={filter} />
+      <form onSubmit={handleAddPerson}>
+        <div>
+          name: <input onChange={handleNewPerson} value={newName} />
+        </div>
+        <div>
+          number: <input onChange={handleNewNumber} value={newNumber} />
+        </div>
+        <div>
+          <button type="submit">add</button>
+        </div>
+      </form>
+      <h2>Numbers</h2>
+      <div>
+        {personsToShow.map((person) => (
+          <Infos person={person} key={person.id} handleDelete={confirmDelete} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default App;
