@@ -1,3 +1,4 @@
+const path = require("path");
 const express = require("express");
 const morgan = require("morgan");
 const cors = require("cors");
@@ -5,11 +6,10 @@ let persons = require("./api");
 
 const app = express();
 const PORT = process.env.PORT || 3002;
-app.use(cors());
-app.use(express.json());
-const path = require("path");
 
 app.use(express.static(path.join(__dirname, "frontend", "dist")));
+app.use(cors());
+app.use(express.json());
 app.use(morgan("tiny"));
 
 app.get("/api/persons", (request, response) => {
@@ -48,14 +48,20 @@ const generateId = () => {
   return String(maxId + 1);
 };
 
-app.post("/api/persons", (request, response) => {
-  const body = request.body;
+app.post("/api/persons", (reqeust, response) => {
+  const body = reqeust.body;
+
+  if (!body.name || !body.number) {
+    return response.status(400).json({ error: "name or number missing" });
+  }
+
+  const nameExists = persons.find((person) => person.name === body.name);
+  if (nameExists) {
+    return response.status(400).json({ error: "name must be unique" });
+  }
 
   if (!body) {
     return response.status(400).json({ error: "content missing" });
-  }
-  if (!body.name || !body.number) {
-    return response.status(400).json({ error: "name or number missing" });
   }
 
   const person = {
